@@ -4,10 +4,39 @@
 
 ### 前提条件
 
-确保你的电脑已安装：
-- **Python 3.8+**（检查：`python --version` 或 `python3 --version`）
-- **Node.js 16+**（检查：`node --version`）
-- **npm**（检查：`npm --version`）
+在开始之前，请先检查你的电脑是否已安装必要的软件：
+
+#### 检查 Python
+
+在终端运行：
+```bash
+python --version
+# 或
+python3 --version
+```
+应该显示 `Python 3.8.x` 或更高版本。
+
+**如果未安装：**
+- Windows: 访问 https://www.python.org/downloads/ 下载安装
+- macOS: `brew install python3`
+- Linux: `sudo apt install python3` 或 `sudo yum install python3`
+
+#### 检查 Node.js 和 npm
+
+在终端运行：
+```bash
+node --version   # 应显示 v16.x.x 或更高
+npm --version    # 应显示 8.x.x 或更高
+```
+
+**如果未安装：**
+- 访问 https://nodejs.org/zh-cn/ 下载安装 LTS 版本
+- 安装完成后**必须重启终端**才能生效
+- npm 会随 Node.js 一起自动安装
+
+> ⚠️ **重要提示：** 
+> - Windows用户安装Node.js时，确保勾选"Add to PATH"选项
+> - 安装完成后必须重启终端（关闭并重新打开）
 
 ---
 
@@ -180,7 +209,19 @@ server: {
 }
 ```
 
-### 问题2：Python命令不存在
+### 问题2：npm命令不存在
+
+**错误信息：** `npm: command not found` 或 `无法将"npm"项识别为...`
+
+**原因：** Node.js 未安装或未添加到环境变量
+
+**解决方法：**
+1. 访问 https://nodejs.org/zh-cn/ 下载安装 Node.js LTS 版本
+2. 安装时确保勾选 "Add to PATH" 选项
+3. **关闭并重新打开终端**（重要！）
+4. 运行 `node --version` 和 `npm --version` 验证安装
+
+### 问题3：Python命令不存在
 
 **错误信息：** `python: command not found`
 
@@ -190,7 +231,7 @@ server: {
 python3 run.py
 ```
 
-### 问题3：pip安装报错
+### 问题4：pip安装报错
 
 **错误信息：** 各种依赖安装失败
 
@@ -203,7 +244,7 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 问题4：前端无法连接后端
+### 问题5：前端无法连接后端
 
 **错误信息：** 浏览器控制台显示网络错误
 
@@ -212,7 +253,7 @@ pip install -r requirements.txt
 2. 确认防火墙没有阻止访问
 3. 重启前端服务
 
-### 问题5：npm install速度很慢
+### 问题6：npm install速度很慢
 
 **解决方法：**
 使用国内镜像源：
