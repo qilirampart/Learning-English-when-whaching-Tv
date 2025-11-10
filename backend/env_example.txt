@@ -1,0 +1,17 @@
+# 翻译API配置（选择一个）
+# 有道翻译API
+YOUDAO_APP_KEY=your_app_key_here
+YOUDAO_APP_SECRET=your_app_secret_here
+
+# 数据库配置
+DATABASE_URL=sqlite:///vocab_learner.db
+
+# Flask配置
+FLASK_ENV=development
+SECRET_KEY=your-secret-key-here
+
+# 使用说明：
+# 1. 复制此文件并重命名为 .env
+# 2. 填写你的API密钥
+# 3. 有道翻译API申请地址：https://ai.youdao.com/
+
