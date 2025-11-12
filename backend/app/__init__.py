@@ -14,9 +14,30 @@ def create_app(config_name='default'):
     # 加载配置
     import sys
     import os
-    # 确保可以导入config模块
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from config import config
+
+    # 获取backend目录的绝对路径
+    backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    # 确保backend目录在sys.path中
+    if backend_dir not in sys.path:
+        sys.path.insert(0, backend_dir)
+
+    # 导入config模块
+    try:
+        from config import config
+    except ImportError:
+        # 如果仍然无法导入，尝试直接从backend目录导入
+        config_path = os.path.join(backend_dir, 'config.py')
+        if os.path.exists(config_path):
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("config", config_path)
+            config_module = importlib.util.module_from_spec(spec)
+            sys.modules["config"] = config_module
+            spec.loader.exec_module(config_module)
+            config = config_module.config
+        else:
+            raise ImportError(f"Cannot find config.py in {backend_dir}")
+
     app.config.from_object(config[config_name])
     
     # 初始化扩展
