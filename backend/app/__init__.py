@@ -10,8 +10,12 @@ db = SQLAlchemy()
 def create_app(config_name='default'):
     """创建Flask应用实例"""
     app = Flask(__name__)
-    
+
     # 加载配置
+    import sys
+    import os
+    # 确保可以导入config模块
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from config import config
     app.config.from_object(config[config_name])
     
