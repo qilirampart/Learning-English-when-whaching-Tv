@@ -1,12 +1,12 @@
 [phases.setup]
-nixPkgs = ["python311"]
+nixPkgs = ["python311", "pip"]
 
 [phases.install]
 cmds = [
-    "cd backend",
-    "pip install -r requirements.txt"
+    "pip install --upgrade pip",
+    "cd backend && pip install -r requirements.txt"
 ]
 
 [start]
-cmd = "cd backend && gunicorn run:app --bind 0.0.0.0:${PORT:-8080}"
+cmd = "cd backend && gunicorn run:app --bind 0.0.0.0:${PORT:-8080} --workers 2 --timeout 120"
 
