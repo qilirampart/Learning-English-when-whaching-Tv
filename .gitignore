@@ -79,3 +79,9 @@ htmlcov/
 # config.py  # 已移除，因为敏感信息都使用环境变量
 .env.local
 .env.*.local
+
+# Screenshots and images
+*.png
+*.jpg
+*.jpeg
+*.gif

@@ -1,6 +1,12 @@
 <template>
   <div id="app">
-    <el-container class="app-container">
+    <!-- 登录/注册页面使用单独布局 -->
+    <template v-if="isAuthPage">
+      <router-view />
+    </template>
+
+    <!-- 应用主布局 -->
+    <el-container v-else class="app-container">
       <!-- 侧边栏 -->
       <el-aside width="200px" class="sidebar">
         <div class="logo">
@@ -28,6 +34,27 @@
             <span>学习统计</span>
           </el-menu-item>
         </el-menu>
+
+        <!-- 用户信息 -->
+        <div class="user-info" v-if="authStore.user">
+          <el-dropdown @command="handleUserCommand">
+            <div class="user-profile">
+              <el-icon class="user-icon"><User /></el-icon>
+              <span class="username">{{ authStore.user.username }}</span>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item disabled>
+                  {{ authStore.user.email }}
+                </el-dropdown-item>
+                <el-dropdown-item divided command="logout">
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
       </el-aside>
 
       <!-- 主内容区 -->
@@ -39,11 +66,43 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
+
 const activeMenu = computed(() => route.path)
+const isAuthPage = computed(() => ['/login', '/register'].includes(route.path))
+
+// 初始化时加载用户信息
+onMounted(async () => {
+  if (authStore.token && !authStore.user) {
+    await authStore.initialize()
+  }
+})
+
+// 处理用户菜单命令
+const handleUserCommand = async (command) => {
+  if (command === 'logout') {
+    try {
+      await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+
+      authStore.logout()
+      ElMessage.success('已退出登录')
+      router.push('/login')
+    } catch {
+      // 用户取消
+    }
+  }
+}
 </script>
 
 <style>
@@ -100,6 +159,45 @@ html, body, #app {
   background: #f0f2f5;
   padding: 20px;
   overflow-y: auto;
+}
+
+.user-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: #263445;
+  border-top: 1px solid #1f2d3d;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #bfcbd9;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.user-profile:hover {
+  background: #1f2d3d;
+  color: #409eff;
+}
+
+.user-icon {
+  font-size: 20px;
+}
+
+.username {
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>
 
