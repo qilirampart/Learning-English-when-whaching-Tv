@@ -6,9 +6,10 @@ from app import db
 class LearningPlan(db.Model):
     """学习计划表"""
     __tablename__ = 'learning_plans'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    word_id = db.Column(db.Integer, db.ForeignKey('words.id'), unique=True, nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    word_id = db.Column(db.Integer, db.ForeignKey('words.id'), nullable=False, index=True)
     mastery_level = db.Column(db.Integer, default=0)  # 0-5级
     review_count = db.Column(db.Integer, default=0)
     last_review = db.Column(db.DateTime)
@@ -16,6 +17,9 @@ class LearningPlan(db.Model):
     is_mastered = db.Column(db.Boolean, default=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # 添加唯一约束：每个用户的每个单词只能有一个学习计划
+    __table_args__ = (db.UniqueConstraint('user_id', 'word_id', name='_user_word_uc'),)
     
     # 艾宾浩斯遗忘曲线间隔（天）
     REVIEW_INTERVALS = [1, 2, 4, 7, 15]

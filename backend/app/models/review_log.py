@@ -6,8 +6,9 @@ from app import db
 class ReviewLog(db.Model):
     """复习记录表"""
     __tablename__ = 'review_logs'
-    
+
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     word_id = db.Column(db.Integer, db.ForeignKey('words.id'), nullable=False, index=True)
     is_correct = db.Column(db.Boolean)
     review_time = db.Column(db.DateTime, default=datetime.utcnow, index=True)

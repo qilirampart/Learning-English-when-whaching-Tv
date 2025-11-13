@@ -45,7 +45,8 @@ def create_app(config_name='default'):
     CORS(app, origins=app.config['CORS_ORIGINS'])
     
     # 注册蓝图
-    from app.routes import words, learning, statistics
+    from app.routes import auth, words, learning, statistics
+    app.register_blueprint(auth.bp)
     app.register_blueprint(words.bp)
     app.register_blueprint(learning.bp)
     app.register_blueprint(statistics.bp)

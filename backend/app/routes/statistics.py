@@ -1,9 +1,10 @@
 """统计相关API"""
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, g
 from app import db
 from app.models.word import Word
 from app.models.query_log import QueryLog
 from app.models.learning_plan import LearningPlan
+from app.utils.auth import login_required
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
 
@@ -11,30 +12,41 @@ bp = Blueprint('statistics', __name__, url_prefix='/api/statistics')
 
 
 @bp.route('/overview', methods=['GET'])
+@login_required
 def get_overview():
     """获取学习统计概览"""
     try:
-        # 总单词数
-        total_words = Word.query.count()
-        
+        # 当前用户的总单词数
+        total_words = LearningPlan.query.filter_by(user_id=g.current_user.id).count()
+
         # 今日查询数
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        today_queries = QueryLog.query.filter(QueryLog.query_time >= today_start).count()
-        
+        today_queries = QueryLog.query.filter(
+            QueryLog.user_id == g.current_user.id,
+            QueryLog.query_time >= today_start
+        ).count()
+
         # 已掌握
-        mastered = LearningPlan.query.filter_by(is_mastered=True).count()
-        
+        mastered = LearningPlan.query.filter_by(
+            user_id=g.current_user.id,
+            is_mastered=True
+        ).count()
+
         # 学习中
-        learning = LearningPlan.query.filter_by(is_mastered=False).count()
-        
+        learning = LearningPlan.query.filter_by(
+            user_id=g.current_user.id,
+            is_mastered=False
+        ).count()
+
         # 待复习
         to_review = LearningPlan.query.filter(
             and_(
+                LearningPlan.user_id == g.current_user.id,
                 LearningPlan.next_review <= datetime.utcnow(),
                 LearningPlan.is_mastered == False
             )
         ).count()
-        
+
         # 最近7天的查询趋势
         weekly_trend = []
         for i in range(6, -1, -1):
@@ -42,6 +54,7 @@ def get_overview():
             day_end = day_start + timedelta(days=1)
             count = QueryLog.query.filter(
                 and_(
+                    QueryLog.user_id == g.current_user.id,
                     QueryLog.query_time >= day_start,
                     QueryLog.query_time < day_end
                 )
@@ -65,14 +78,16 @@ def get_overview():
 
 
 @bp.route('/tv_shows', methods=['GET'])
+@login_required
 def get_tv_show_stats():
     """获取剧集统计"""
     try:
-        # 查询每个剧集的单词数量
+        # 查询当前用户每个剧集的单词数量
         results = db.session.query(
             QueryLog.tv_show,
             func.count(func.distinct(QueryLog.word_id)).label('word_count')
         ).filter(
+            QueryLog.user_id == g.current_user.id,
             QueryLog.tv_show != ''
         ).group_by(
             QueryLog.tv_show

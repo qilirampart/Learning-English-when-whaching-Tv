@@ -1,10 +1,11 @@
 """单词相关API"""
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 from app import db
 from app.models.word import Word
 from app.models.query_log import QueryLog
 from app.models.learning_plan import LearningPlan
 from app.services.translation_service import TranslationService
+from app.utils.auth import login_required
 from sqlalchemy import desc, func
 import json
 
@@ -13,6 +14,7 @@ translation_service = TranslationService()
 
 
 @bp.route('/query', methods=['POST'])
+@login_required
 def query_word():
     """查询单词并自动记录"""
     try:
@@ -43,12 +45,23 @@ def query_word():
             db.session.add(word)
             db.session.flush()  # 获取word.id
             
+        # 检查当前用户是否已有该单词的学习计划
+        learning_plan = LearningPlan.query.filter_by(
+            user_id=g.current_user.id,
+            word_id=word.id
+        ).first()
+
+        if not learning_plan:
             # 创建学习计划
-            learning_plan = LearningPlan(word_id=word.id)
+            learning_plan = LearningPlan(
+                user_id=g.current_user.id,
+                word_id=word.id
+            )
             db.session.add(learning_plan)
-        
+
         # 创建查询记录
         query_log = QueryLog(
+            user_id=g.current_user.id,
             word_id=word.id,
             tv_show=data.get('tv_show', ''),
             season_episode=data.get('season_episode', ''),
@@ -69,15 +82,20 @@ def query_word():
 
 
 @bp.route('/search', methods=['GET'])
+@login_required
 def search_words():
     """搜索历史查询过的单词"""
     try:
         keyword = request.args.get('keyword', '').strip()
-        
+
         if not keyword:
             return jsonify({'code': 400, 'message': '关键词不能为空'}), 400
-        
-        words = Word.query.filter(Word.word.like(f'%{keyword}%')).limit(20).all()
+
+        # 只搜索当前用户查询过的单词
+        words = Word.query.join(QueryLog).filter(
+            QueryLog.user_id == g.current_user.id,
+            Word.word.like(f'%{keyword}%')
+        ).distinct().limit(20).all()
         
         return jsonify({
             'code': 200,
@@ -89,6 +107,7 @@ def search_words():
 
 
 @bp.route('/<int:word_id>', methods=['GET'])
+@login_required
 def get_word_detail(word_id):
     """获取单词详情（含查询历史）"""
     try:
@@ -97,11 +116,17 @@ def get_word_detail(word_id):
         if not word:
             return jsonify({'code': 404, 'message': '单词不存在'}), 404
         
-        # 获取查询历史
-        query_logs = QueryLog.query.filter_by(word_id=word_id).order_by(desc(QueryLog.query_time)).all()
-        
-        # 获取学习计划
-        learning_plan = LearningPlan.query.filter_by(word_id=word_id).first()
+        # 获取当前用户的查询历史
+        query_logs = QueryLog.query.filter_by(
+            user_id=g.current_user.id,
+            word_id=word_id
+        ).order_by(desc(QueryLog.query_time)).all()
+
+        # 获取当前用户的学习计划
+        learning_plan = LearningPlan.query.filter_by(
+            user_id=g.current_user.id,
+            word_id=word_id
+        ).first()
         
         result = word.to_dict()
         result['query_logs'] = [log.to_dict() for log in query_logs]
@@ -114,6 +139,7 @@ def get_word_detail(word_id):
 
 
 @bp.route('/list', methods=['GET'])
+@login_required
 def get_words_list():
     """获取所有查询过的单词列表"""
     try:
@@ -124,27 +150,35 @@ def get_words_list():
         filter_show = request.args.get('filter_show', '')
         mastery_level = request.args.get('mastery_level', type=int)
         
-        # 构建查询
-        query = Word.query
-        
+        # 构建查询 - 只查询当前用户的单词
+        query = Word.query.join(QueryLog).filter(QueryLog.user_id == g.current_user.id)
+
         # 按剧集筛选
         if filter_show:
-            query = query.join(QueryLog).filter(QueryLog.tv_show.like(f'%{filter_show}%'))
-        
+            query = query.filter(QueryLog.tv_show.like(f'%{filter_show}%'))
+
         # 按掌握程度筛选
         if mastery_level is not None:
-            query = query.join(LearningPlan).filter(LearningPlan.mastery_level == mastery_level)
+            query = query.join(LearningPlan).filter(
+                LearningPlan.user_id == g.current_user.id,
+                LearningPlan.mastery_level == mastery_level
+            )
         
+        # 去重（因为一个单词可能有多条查询记录）
+        query = query.distinct()
+
         # 排序
         if order_by == 'frequency':
-            # 按查询频率排序
-            query = query.outerjoin(QueryLog).group_by(Word.id).order_by(desc(func.count(QueryLog.id)))
+            # 按查询频率排序 - 统计当前用户的查询次数
+            query = query.group_by(Word.id).order_by(desc(func.count(QueryLog.id)))
         elif order_by == 'mastery':
             # 按掌握程度排序
-            query = query.outerjoin(LearningPlan).order_by(desc(LearningPlan.mastery_level))
+            query = query.outerjoin(LearningPlan,
+                (LearningPlan.word_id == Word.id) & (LearningPlan.user_id == g.current_user.id)
+            ).order_by(desc(LearningPlan.mastery_level))
         else:
-            # 默认按时间排序
-            query = query.order_by(desc(Word.created_at))
+            # 默认按最后查询时间排序
+            query = query.order_by(desc(QueryLog.query_time))
         
         # 分页
         pagination = query.paginate(page=page, per_page=page_size, error_out=False)
@@ -154,19 +188,26 @@ def get_words_list():
         for word in pagination.items:
             word_dict = word.to_dict()
             
-            # 添加剧集信息
+            # 添加当前用户的剧集信息
             tv_shows = db.session.query(QueryLog.tv_show).filter(
+                QueryLog.user_id == g.current_user.id,
                 QueryLog.word_id == word.id,
                 QueryLog.tv_show != ''
             ).distinct().all()
             word_dict['tv_shows'] = [show[0] for show in tv_shows]
-            
-            # 添加掌握程度
-            learning_plan = LearningPlan.query.filter_by(word_id=word.id).first()
+
+            # 添加当前用户的掌握程度
+            learning_plan = LearningPlan.query.filter_by(
+                user_id=g.current_user.id,
+                word_id=word.id
+            ).first()
             word_dict['mastery_level'] = learning_plan.mastery_level if learning_plan else 0
-            
-            # 最后查询时间
-            last_query = QueryLog.query.filter_by(word_id=word.id).order_by(desc(QueryLog.query_time)).first()
+
+            # 当前用户的最后查询时间
+            last_query = QueryLog.query.filter_by(
+                user_id=g.current_user.id,
+                word_id=word.id
+            ).order_by(desc(QueryLog.query_time)).first()
             word_dict['last_query'] = last_query.query_time.isoformat() if last_query else None
             
             items.append(word_dict)

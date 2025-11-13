@@ -6,8 +6,9 @@ from app import db
 class QueryLog(db.Model):
     """查询记录表"""
     __tablename__ = 'query_logs'
-    
+
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     word_id = db.Column(db.Integer, db.ForeignKey('words.id'), nullable=False, index=True)
     tv_show = db.Column(db.String(200))
     season_episode = db.Column(db.String(50))
