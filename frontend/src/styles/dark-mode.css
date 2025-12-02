@@ -1,0 +1,374 @@
+/**
+ * 深色模式自定义样式
+ * 为应用添加深色主题支持
+ */
+
+/* ==================== 全局样式 ==================== */
+
+html {
+  /* 平滑过渡 */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* 页面背景 */
+html:not(.dark) {
+  --app-bg-color: #f5f7fa;
+  --app-text-color: #303133;
+  --app-text-secondary: #909399;
+  --app-card-bg: #ffffff;
+  --app-border-color: #dcdfe6;
+}
+
+html.dark {
+  --app-bg-color: #0a0a0a;
+  --app-text-color: #e5eaf3;
+  --app-text-secondary: #909399;
+  --app-card-bg: #141414;
+  --app-border-color: #30303a;
+}
+
+body {
+  background-color: var(--app-bg-color);
+  color: var(--app-text-color);
+}
+
+/* ==================== 渐变色调整 ==================== */
+
+/* 深色模式下的卡片渐变 */
+html.dark .result-card,
+html.dark .stat-item,
+html.dark .card-front,
+html.dark .card-back {
+  /* 保持渐变，但降低亮度 */
+  filter: brightness(0.85) saturate(1.1);
+}
+
+/* 深色模式下的按钮渐变 */
+html.dark .pronunciation-controls .el-button.is-circle {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+html.dark .pronunciation-controls .el-button.is-circle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ==================== 单词卡片 ==================== */
+
+html.dark .word-card {
+  background: var(--app-card-bg);
+  border-color: var(--app-border-color);
+}
+
+html.dark .word-card:hover {
+  border-color: #409eff;
+  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.3);
+}
+
+html.dark .word-title {
+  color: var(--app-text-color);
+}
+
+html.dark .word-translation {
+  color: #909399;
+}
+
+/* ==================== 查询页面 ==================== */
+
+html.dark .query-card {
+  background: var(--app-card-bg);
+}
+
+html.dark .title {
+  color: var(--app-text-color);
+}
+
+html.dark .subtitle {
+  color: #909399;
+}
+
+/* ==================== 学习统计 ==================== */
+
+html.dark .overview-card,
+html.dark .review-card {
+  background: var(--app-card-bg);
+}
+
+html.dark .page-title {
+  color: var(--app-text-color);
+}
+
+html.dark .card-header h2 {
+  color: var(--app-text-color);
+}
+
+/* ==================== 复习项 ==================== */
+
+html.dark .review-item {
+  background: var(--app-card-bg);
+  border-color: var(--app-border-color);
+}
+
+html.dark .review-item:hover {
+  border-color: #409eff;
+  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.3);
+}
+
+html.dark .item-content h3 {
+  color: var(--app-text-color);
+}
+
+html.dark .item-content p {
+  color: #909399;
+}
+
+/* ==================== 侧边栏 ==================== */
+
+html.dark .sidebar {
+  background: var(--app-card-bg);
+  border-right: 1px solid var(--app-border-color);
+}
+
+html.dark .logo {
+  color: var(--app-text-color);
+}
+
+html.dark .el-menu {
+  background-color: var(--app-card-bg);
+  border-right: none;
+}
+
+html.dark .el-menu-item,
+html.dark .el-sub-menu__title {
+  color: var(--app-text-color);
+}
+
+html.dark .el-menu-item:hover,
+html.dark .el-sub-menu__title:hover {
+  background-color: rgba(64, 158, 255, 0.1);
+}
+
+html.dark .el-menu-item.is-active {
+  background-color: rgba(64, 158, 255, 0.2);
+  color: #409eff;
+}
+
+/* ==================== 顶部用户信息 ==================== */
+
+html.dark .user-info {
+  color: var(--app-text-color);
+}
+
+html.dark .username {
+  color: var(--app-text-color);
+}
+
+/* ==================== 主题切换按钮 ==================== */
+
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.theme-toggle .el-button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+html.dark .theme-toggle .el-button {
+  box-shadow: 0 2px 12px rgba(255, 255, 255, 0.1);
+}
+
+.theme-toggle .el-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .theme-toggle .el-button:hover {
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+}
+
+/* ==================== 对话框 ==================== */
+
+html.dark .el-dialog {
+  background-color: var(--app-card-bg);
+}
+
+html.dark .el-dialog__header {
+  border-bottom-color: var(--app-border-color);
+}
+
+html.dark .dialog-title {
+  color: var(--app-text-color);
+}
+
+html.dark .word-detail h3 {
+  color: #409eff;
+}
+
+html.dark .word-detail p {
+  color: var(--app-text-color);
+}
+
+/* ==================== 空状态 ==================== */
+
+html.dark .el-empty__description {
+  color: #909399;
+}
+
+/* ==================== 时间轴 ==================== */
+
+html.dark .el-timeline-item__timestamp {
+  color: #909399;
+}
+
+html.dark .el-timeline-item__content {
+  color: var(--app-text-color);
+}
+
+/* ==================== 滚动条 ==================== */
+
+html.dark ::-webkit-scrollbar {
+  background-color: var(--app-bg-color);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: #4c4d57;
+  border-radius: 4px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #5a5b66;
+}
+
+/* ==================== 表单元素 ==================== */
+
+html.dark .el-input__wrapper {
+  background-color: var(--app-card-bg);
+}
+
+html.dark .el-textarea__inner {
+  background-color: var(--app-card-bg);
+}
+
+/* ==================== 分页 ==================== */
+
+html.dark .el-pagination {
+  color: var(--app-text-color);
+}
+
+html.dark .el-pagination button {
+  background-color: var(--app-card-bg);
+  color: var(--app-text-color);
+}
+
+html.dark .el-pager li {
+  background-color: var(--app-card-bg);
+  color: var(--app-text-color);
+}
+
+/* ==================== 下拉菜单 ==================== */
+
+html.dark .el-dropdown-menu {
+  background-color: var(--app-card-bg);
+  border-color: var(--app-border-color);
+}
+
+html.dark .el-dropdown-menu__item {
+  color: var(--app-text-color);
+}
+
+html.dark .el-dropdown-menu__item:hover {
+  background-color: rgba(64, 158, 255, 0.1);
+}
+
+html.dark .el-dropdown-menu__item.is-disabled {
+  color: #606266;
+}
+
+/* ==================== 进度条 ==================== */
+
+html.dark .el-progress__text {
+  color: var(--app-text-color);
+}
+
+/* ==================== 结果提示 ==================== */
+
+html.dark .el-result__title {
+  color: var(--app-text-color);
+}
+
+html.dark .el-result__subtitle {
+  color: #909399;
+}
+
+/* ==================== 标签 ==================== */
+
+html.dark .el-tag {
+  border-color: var(--app-border-color);
+}
+
+/* ==================== 最近查询 ==================== */
+
+html.dark .recent-queries h3 {
+  color: var(--app-text-color);
+}
+
+html.dark .recent-tag {
+  background-color: var(--app-card-bg);
+  border-color: var(--app-border-color);
+  color: var(--app-text-color);
+}
+
+html.dark .recent-tag:hover {
+  border-color: #409eff;
+  background-color: rgba(64, 158, 255, 0.1);
+}
+
+/* ==================== 统计卡片标题 ==================== */
+
+html.dark .query-time {
+  color: #909399;
+}
+
+/* ==================== 过渡动画 ==================== */
+
+.theme-transition {
+  transition: all 0.3s ease;
+}
+
+/* ==================== 响应式调整 ==================== */
+
+@media (max-width: 768px) {
+  .theme-toggle {
+    bottom: 70px;
+    right: 15px;
+  }
+
+  .theme-toggle .el-button {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+/* ==================== 打印样式 ==================== */
+
+@media print {
+  html.dark {
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  .theme-toggle {
+    display: none;
+  }
+}

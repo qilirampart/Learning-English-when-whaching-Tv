@@ -51,6 +51,14 @@
         
         <div class="review-card-flip">
           <div v-if="!showAnswer" class="card-front">
+            <div class="pronunciation-icon">
+              <el-button
+                :icon="Microphone"
+                circle
+                size="large"
+                @click="playWord(currentReviewWord.word)"
+              />
+            </div>
             <h2 class="review-word">{{ currentReviewWord.word }}</h2>
             <p class="review-phonetic">{{ currentReviewWord.phonetic }}</p>
             <el-button
@@ -63,6 +71,14 @@
           </div>
           
           <div v-else class="card-back">
+            <div class="pronunciation-icon">
+              <el-button
+                :icon="Microphone"
+                circle
+                size="large"
+                @click="playWord(currentReviewWord.word)"
+              />
+            </div>
             <h2 class="review-word">{{ currentReviewWord.word }}</h2>
             <p class="review-phonetic">{{ currentReviewWord.phonetic }}</p>
             <div class="answer-content">
@@ -122,7 +138,15 @@
           class="review-item"
         >
           <div class="item-content">
-            <h3>{{ word.word }}</h3>
+            <div class="item-title-row">
+              <h3>{{ word.word }}</h3>
+              <el-button
+                :icon="Microphone"
+                size="small"
+                circle
+                @click="playWord(word.word)"
+              />
+            </div>
             <p>{{ word.translation }}</p>
           </div>
           <el-tag
@@ -143,8 +167,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { Microphone } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { learningApi } from '@/api'
+import { playWord } from '@/utils/useSpeech'
 
 const overviewLoading = ref(false)
 const reviewLoading = ref(false)
@@ -249,86 +275,190 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.learning-view {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+.learning-view :deep(.el-card) {
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 32px;
+}
+
+.learning-view :deep(.el-card:hover) {
+  box-shadow: 0 12px 48px rgba(31, 38, 135, 0.25);
+}
+
 .page-title {
-  font-size: 28px;
-  margin-bottom: 20px;
-  color: #303133;
+  font-size: 36px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  letter-spacing: -1px;
 }
 
 .overview-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-top: 28px;
 }
 
 .stat-item {
   text-align: center;
-  padding: 30px 20px;
-  border-radius: 8px;
+  padding: 36px 24px;
+  border-radius: 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-item::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  animation: float 8s ease-in-out infinite;
+}
+
+.stat-item:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
 }
 
 .stat-item.success {
   background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  box-shadow: 0 8px 24px rgba(17, 153, 142, 0.3);
+}
+
+.stat-item.success:hover {
+  box-shadow: 0 12px 32px rgba(17, 153, 142, 0.4);
 }
 
 .stat-item.warning {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 8px 24px rgba(240, 147, 251, 0.3);
+}
+
+.stat-item.warning:hover {
+  box-shadow: 0 12px 32px rgba(240, 147, 251, 0.4);
 }
 
 .stat-item.danger {
   background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  box-shadow: 0 8px 24px rgba(250, 112, 154, 0.3);
+}
+
+.stat-item.danger:hover {
+  box-shadow: 0 12px 32px rgba(250, 112, 154, 0.4);
 }
 
 .stat-value {
-  font-size: 48px;
-  font-weight: bold;
-  margin-bottom: 8px;
+  font-size: 56px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .stat-label {
-  font-size: 16px;
-  opacity: 0.9;
+  font-size: 17px;
+  opacity: 0.95;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
 }
 
 .review-card {
-  margin-top: 20px;
+  margin-top: 28px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.1);
 }
 
 .card-header h2 {
   margin: 0;
-  color: #303133;
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.card-header .el-button {
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 15px;
+}
+
+.card-header .el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
 }
 
 .review-mode {
-  padding: 20px 0;
+  padding: 28px 0;
 }
 
 .review-progress {
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   text-align: center;
+}
+
+.review-progress :deep(.el-progress__text) {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.review-progress :deep(.el-progress-bar__outer) {
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.review-progress :deep(.el-progress-bar__inner) {
+  border-radius: 12px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
 }
 
 .progress-text {
   display: block;
-  margin-top: 10px;
-  font-size: 16px;
+  margin-top: 16px;
+  font-size: 18px;
   color: #606266;
+  font-weight: 700;
 }
 
 .review-card-flip {
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
-  min-height: 400px;
+  min-height: 450px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -337,83 +467,229 @@ onMounted(() => {
 .card-front,
 .card-back {
   width: 100%;
-  padding: 60px 40px;
-  border-radius: 12px;
+  padding: 64px 48px;
+  border-radius: 24px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   text-align: center;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 16px 48px rgba(102, 126, 234, 0.4);
+  position: relative;
+  overflow: hidden;
+  animation: fade-in-up 0.5s ease-out;
+}
+
+.card-front::before,
+.card-back::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: float 8s ease-in-out infinite;
+}
+
+.pronunciation-icon {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 2;
+}
+
+.pronunciation-icon :deep(.el-button) {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  width: 56px;
+  height: 56px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.pronunciation-icon :deep(.el-button:hover) {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .review-word {
-  font-size: 48px;
-  font-weight: bold;
-  margin-bottom: 15px;
+  font-size: 56px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  letter-spacing: -1px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
 .review-phonetic {
-  font-size: 24px;
-  margin-bottom: 30px;
-  opacity: 0.9;
+  font-size: 26px;
+  margin-bottom: 40px;
+  opacity: 0.95;
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
 }
 
 .answer-content {
-  margin: 30px 0;
+  margin: 36px 0;
   text-align: left;
+  position: relative;
+  z-index: 1;
 }
 
 .translation {
-  font-size: 28px;
-  font-weight: 500;
-  margin-bottom: 15px;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  line-height: 1.6;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .definition {
-  font-size: 18px;
-  opacity: 0.9;
+  font-size: 20px;
+  opacity: 0.95;
   font-style: italic;
+  line-height: 1.7;
 }
 
 .review-buttons {
   display: flex;
-  gap: 15px;
+  gap: 20px;
   justify-content: center;
-  margin-top: 30px;
+  margin-top: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.review-buttons .el-button {
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.review-buttons .el-button:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 .review-list {
   display: grid;
-  gap: 15px;
+  gap: 16px;
 }
 
 .review-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  transition: all 0.3s;
+  padding: 24px;
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.review-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transform: scaleY(0);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .review-item:hover {
-  border-color: #409eff;
-  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.2);
+  border-color: rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px) translateX(4px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.review-item:hover::before {
+  transform: scaleY(1);
+}
+
+.item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
 .item-content h3 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
   color: #303133;
+  letter-spacing: -0.5px;
 }
 
 .item-content p {
   margin: 0;
   color: #606266;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.item-title-row .el-button {
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  background: rgba(102, 126, 234, 0.1);
+  border-color: transparent;
+  color: #667eea;
+}
+
+.item-title-row .el-button:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: scale(1.1);
+}
+
+.review-item:hover .item-title-row .el-button {
+  opacity: 1;
+}
+
+.review-item .el-tag {
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .review-completed {
-  padding: 40px 0;
+  padding: 48px 0;
+}
+
+.review-completed :deep(.el-result__icon svg) {
+  width: 80px;
+  height: 80px;
+}
+
+.review-completed :deep(.el-result__title p) {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.review-completed :deep(.el-result__subtitle p) {
+  font-size: 16px;
 }
 </style>
 
