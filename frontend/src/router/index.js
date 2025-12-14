@@ -1,87 +1,45 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { createRouter, createWebHistory } from 'vue-router';
+import AppLayout from '../layouts/AppLayout.vue';
+import LoginView from '../views/LoginView.vue';
+import DashboardView from '../views/DashboardView.vue';
+import LibraryView from '../views/LibraryView.vue';
+import LearningView from '../views/LearningView.vue';
+import AIView from '../views/AIView.vue';
+import WordDetailView from '../views/WordDetailView.vue';
+
+const routes = [
+  {
+    path: '/login',
+    component: LoginView,
+    meta: { public: true }
+  },
+  {
+    path: '/',
+    component: AppLayout,
+    children: [
+      { path: '', redirect: '/dashboard' },
+      { path: 'dashboard', component: DashboardView },
+      { path: 'library', component: LibraryView },
+      { path: 'learning', component: LearningView }, // 学习计划/复习
+      { path: 'ai', component: AIView },
+      { path: 'words/:id', component: WordDetailView } // 单词详情页
+    ]
+  }
+];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      redirect: '/query'
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: () => import('../views/LoginView.vue'),
-      meta: { requiresGuest: true }
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: () => import('../views/RegisterView.vue'),
-      meta: { requiresGuest: true }
-    },
-    {
-      path: '/query',
-      name: 'query',
-      component: () => import('../views/QueryView.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/words',
-      name: 'words',
-      component: () => import('../views/WordsView.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/learning',
-      name: 'learning',
-      component: () => import('../views/LearningView.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/statistics',
-      name: 'statistics',
-      component: () => import('../views/StatisticsView.vue'),
-      meta: { requiresAuth: true }
-    }
-  ]
-})
+  history: createWebHistory(),
+  routes
+});
 
-// 路由守卫
-router.beforeEach(async (to, from, next) => {
-  const authStore = useAuthStore()
-
-  // 如果没有初始化用户信息，先初始化
-  if (authStore.token && !authStore.user) {
-    await authStore.initialize()
+// 简单的路由守卫
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token');
+  if (!to.meta.public && !token) {
+    next('/login');
+  } else {
+    next();
   }
+});
 
-  // 需要登录的页面
-  if (to.meta.requiresAuth) {
-    if (!authStore.isAuthenticated) {
-      // 未登录，跳转到登录页
-      next({
-        path: '/login',
-        query: { redirect: to.fullPath } // 保存原始目标路径，登录后可以跳回
-      })
-    } else {
-      next()
-    }
-  }
-  // 游客页面（登录、注册）
-  else if (to.meta.requiresGuest) {
-    if (authStore.isAuthenticated) {
-      // 已登录，跳转到首页
-      next('/')
-    } else {
-      next()
-    }
-  }
-  // 其他页面
-  else {
-    next()
-  }
-})
-
-export default router
-
+export default router;

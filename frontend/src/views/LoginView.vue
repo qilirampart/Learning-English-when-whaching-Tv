@@ -1,174 +1,89 @@
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <div class="login-header">
-        <h1>美剧单词学习助手</h1>
-        <p>登录您的账户</p>
+  <div class="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-50">
+    <div class="fixed inset-0 -z-10 pointer-events-none">
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+      <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+    </div>
+
+    <div class="w-full max-w-md bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl shadow-indigo-500/10 p-8 m-4 transform transition-all">
+      <div class="text-center mb-8">
+        <div class="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900">{{ isLogin ? '欢迎回来' : '创建账户' }}</h2>
+        <p class="text-slate-500 text-sm mt-2">美剧学英语,从这里开始</p>
       </div>
 
-      <el-form
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="loginRules"
-        class="login-form"
-        @submit.prevent="handleLogin"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="loginForm.username"
-            placeholder="用户名或邮箱"
-            size="large"
-            prefix-icon="User"
-            clearable
-          />
-        </el-form-item>
-
-        <el-form-item prop="password">
-          <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="密码"
-            size="large"
-            prefix-icon="Lock"
-            show-password
-            @keyup.enter="handleLogin"
-          />
-        </el-form-item>
-
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            :loading="authStore.loading"
-            @click="handleLogin"
-            style="width: 100%"
-          >
-            登录
-          </el-button>
-        </el-form-item>
-
-        <div class="login-footer">
-          <span>还没有账号？</span>
-          <router-link to="/register" class="register-link">立即注册</router-link>
+      <form @submit.prevent="handleSubmit" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">用户名</label>
+          <input v-model="form.username" type="text" class="w-full px-4 py-3 rounded-xl bg-white/50 border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none" required placeholder="请输入用户名">
         </div>
-      </el-form>
+
+        <div v-if="!isLogin">
+          <label class="block text-sm font-medium text-slate-700 mb-1">邮箱</label>
+          <input v-model="form.email" type="email" class="w-full px-4 py-3 rounded-xl bg-white/50 border border-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all outline-none" placeholder="name@example.com">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">密码</label>
+          <input v-model="form.password" type="password" class="w-full px-4 py-3 rounded-xl bg-white/50 border border-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all outline-none" required placeholder="••••••••">
+        </div>
+
+        <button type="submit" :disabled="loading" class="w-full py-3.5 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-lg shadow-slate-900/20 hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98] transition-all flex justify-center items-center">
+          <span v-if="loading" class="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-4 h-4"></span>
+          {{ isLogin ? '登录' : '注册' }}
+        </button>
+      </form>
+
+      <div class="mt-6 text-center">
+        <p class="text-sm text-slate-500">
+          {{ isLogin ? "还没有账户?" : "已有账户?" }}
+          <button @click="toggleMode" class="text-indigo-600 font-bold hover:underline ml-1">
+            {{ isLogin ? '立即注册' : '立即登录' }}
+          </button>
+        </p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { ElMessage } from 'element-plus'
+import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
+import request from '../utils/request';
 
-const router = useRouter()
-const authStore = useAuthStore()
+const router = useRouter();
+const authStore = useAuthStore();
 
-// 表单引用
-const loginFormRef = ref(null)
+const isLogin = ref(true);
+const loading = ref(false);
+const form = reactive({ username: '', password: '', email: '' });
 
-// 表单数据
-const loginForm = reactive({
-  username: '',
-  password: ''
-})
+const toggleMode = () => {
+  isLogin.value = !isLogin.value;
+  form.username = ''; form.password = ''; form.email = '';
+};
 
-// 表单验证规则
-const loginRules = {
-  username: [
-    { required: true, message: '请输入用户名或邮箱', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码至少6个字符', trigger: 'blur' }
-  ]
-}
-
-// 处理登录
-const handleLogin = async () => {
-  if (!loginFormRef.value) return
-
-  await loginFormRef.value.validate(async (valid) => {
-    if (!valid) return
-
-    const result = await authStore.login(loginForm.username, loginForm.password)
-
-    if (result.success) {
-      ElMessage.success('登录成功！')
-      router.push('/')
+const handleSubmit = async () => {
+  loading.value = true;
+  try {
+    if (isLogin.value) {
+      // 登录逻辑
+      await authStore.login(form.username, form.password);
+      router.push('/dashboard');
     } else {
-      ElMessage.error(result.message)
+      // 注册逻辑:POST /api/auth/register
+      await request.post('/auth/register', form);
+      // 注册成功后直接登录或提示切换
+      alert('注册成功,请登录');
+      isLogin.value = true;
     }
-  })
-}
+  } catch (error) {
+    alert(error.message || '操作失败');
+  } finally {
+    loading.value = false;
+  }
+};
 </script>
-
-<style scoped>
-.login-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-}
-
-.login-card {
-  width: 100%;
-  max-width: 420px;
-  background: white;
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.login-header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.login-header p {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
-}
-
-.login-form {
-  margin-top: 30px;
-}
-
-.login-form :deep(.el-form-item) {
-  margin-bottom: 24px;
-}
-
-.login-form :deep(.el-input__wrapper) {
-  padding: 12px 16px;
-}
-
-.login-footer {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 14px;
-  color: #666;
-}
-
-.register-link {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 500;
-  margin-left: 4px;
-}
-
-.register-link:hover {
-  color: #764ba2;
-  text-decoration: underline;
-}
-</style>

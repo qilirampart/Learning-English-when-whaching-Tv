@@ -42,7 +42,10 @@
 | 14 | `port = int(os.getenv('PORT', 5000))`：平台可用 `PORT` 注入，否则默认 5000。|
 | 15-18 | `app.run(...)`：监听 `0.0.0.0`，端口为上面变量，`debug` 取自配置（开发 True，生产 False）。|
 
+只有当我直接运行 run.py 时，才根据环境决定要在哪个端口开考场，并且在开发练习时允许带调试工具；如果部署到生产，就按照平台给的教室号去开考场，并关闭调试特权”。
+
 ### backend/config.py
+
 | 行号 | 讲解 |
 | --- | --- |
 | 1 | docstring：文件用途。|
@@ -73,6 +76,38 @@
 | 47-52 | 延迟导入四个蓝图模块，然后逐个 `register_blueprint`。|
 | 54-56 | 在应用上下文里 `db.create_all()`，保证第一次启动会建表。|
 | 58 | 返回 app 实例。|
+
+```python
+ import sys
+    import os
+
+    # 获取backend目录的绝对路径
+    backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    # 确保backend目录在sys.path中
+    if backend_dir not in sys.path:
+        sys.path.insert(0, backend_dir)
+
+    # 导入config模块
+    try:
+        from config import config
+    except ImportError:
+        # 如果仍然无法导入，尝试直接从backend目录导入
+        config_path = os.path.join(backend_dir, 'config.py')
+        if os.path.exists(config_path):
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("config", config_path)
+            config_module = importlib.util.module_from_spec(spec)
+            sys.modules["config"] = config_module
+            spec.loader.exec_module(config_module)
+            config = config_module.config
+        else:
+            raise ImportError(f"Cannot find config.py in {backend_dir}")
+
+    app.config.from_object(config[config_name])
+```
+
+
 
 ## 数据模型 (backend/app/models)
 
@@ -120,7 +155,39 @@
 | 27-51 | `calculate_next_review(is_correct)`：根据答题结果调整 mastery。答对则 `+1` 并根据当前 mastery 决定 `next_review`；到达数组尾则视为掌握并取消下一次复习。答错则 `max(level-1,0)` 并重置下次复习为 1 天后。无论对错都累加 `review_count` 并更新 `last_review`。|
 | 53-64 | `to_dict`：输出给前端看的字段。|
 
+```python
+    def calculate_next_review(self, is_correct):
+        """
+        计算下次复习时间
+        :param is_correct: 本次复习是否正确
+        """
+        if is_correct:
+            # 答对了，提升掌握度
+            self.mastery_level = min(self.mastery_level + 1, 5)
+            if self.mastery_level >= len(self.REVIEW_INTERVALS):
+                # 已完全掌握
+                self.is_mastered = True
+                self.next_review = None
+            else:
+                # 计算下次复习时间
+                interval = self.REVIEW_INTERVALS[self.mastery_level]
+                self.next_review = datetime.utcnow() + timedelta(days=interval)
+        else:
+            # 答错了，重置掌握度
+            self.mastery_level = max(self.mastery_level - 1, 0)
+            self.is_mastered = False
+            interval = self.REVIEW_INTERVALS[0]
+            self.next_review = datetime.utcnow() + timedelta(days=interval)
+        
+        self.review_count += 1
+        self.last_review = datetime.utcnow()
+    
+```
+
+
+
 ### query_log.py
+
 | 行号 | 讲解 |
 | --- | --- |
 | 1-3 | docstring与导入。|

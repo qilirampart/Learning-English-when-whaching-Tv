@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(tree:*)",
+      "Bash(timeout /t 3)",
+      "Bash(npm run dev:*)",
+      "Bash(pip install:*)",
+      "Bash(pip config:*)",
+      "Bash(pip uninstall:*)",
+      "Bash(python run.py:*)",
+      "Bash(echo:*)",
+      "Bash(python test_iflow_final.py:*)",
+      "Bash(python test_iflow_correct.py:*)",
+      "Bash(python test_iflow_models.py:*)",
+      "Bash(npm install:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(python:*)",
+      "Bash(test_output.txt)",
+      "Bash(git config:*)",
+      "Bash(git add:*)",
+      "Bash(npx tailwindcss init -p)",
+      "Bash(timeout /t 5)",
+      "Bash(ping:*)",
+      "Bash(nul)",
+      "Bash(dir:*)",
+      "Bash(curl:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "primary": {
+    "provider": "anyrouter",
+    "base_url": "https://c.cspok.cn/v1",
+    "endpoint": "https://c.cspok.cn/v1/chat/completions",
+    "api_key": "sk-IxAvh52Ug0PgQLRdok4TmaJcLV3M5Qdcyp98xMf4aXBAFegC",
+    "model": "claude-sonnet-4-5-20250929",
+    "website": "https://anyrouter.top",
+    "notes": "anyrouter 主 API - Claude Sonnet 4.5 (2025-09-29)"
+  },
+  "backup": {
+    "provider": "iFlow",
+    "base_url": "https://apis.iflow.cn/v1",
+    "endpoint": "https://apis.iflow.cn/v1/chat/completions",
+    "api_key": "sk-17b2eca4e3459195d34f162353b5cd33",
+    "model": "Qwen3-Coder-Plus",
+    "notes": "iFlow 备用 API - 主 API 失败时使用"
+  },
+  "alternative_models": {
+    "haiku": "claude-haiku-4-5-20251001",
+    "opus": "claude-opus-4-5-20251101",
+    "sonnet": "claude-sonnet-4-5-20250929"
+  },
+  "failover_enabled": true,
+  "retry_attempts": 3,
+  "timeout": 30
+}
